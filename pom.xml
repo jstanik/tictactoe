@@ -28,6 +28,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <module>tictactoe-game</module>
     <module>tictactoe-net</module>
     <module>tictactoe-server</module>
+    <module>tictactoe-gui</module>
   </modules>
 
   <dependencyManagement>
