@@ -1,5 +1,7 @@
 package bakeit.club.tictactoe.gui;
 
+import static javax.swing.SwingUtilities.invokeLater;
+
 import bakeit.club.tictactoe.client.ClientPlayer;
 import bakeit.club.tictactoe.game.BoardState;
 import bakeit.club.tictactoe.game.Player;
@@ -7,12 +9,14 @@ import bakeit.club.tictactoe.game.PlayerGameInfo;
 import bakeit.club.tictactoe.game.PlayersResult;
 import bakeit.club.tictactoe.game.Position;
 import java.awt.BorderLayout;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
@@ -25,9 +29,10 @@ public class GuiPlayer extends JFrame implements Player {
     GuiPlayer frame = new GuiPlayer();
     frame.setSize(600, 600);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    SwingUtilities.invokeLater((() -> {
+    invokeLater((() -> {
       String name = readName();
       frame.setName(name);
+      frame.setTitle(name);
       InetAddress address = readAddress();
       InetSocketAddress socketAddress = new InetSocketAddress(address, PORT);
       ClientPlayer player = new ClientPlayer(frame, socketAddress);
@@ -37,7 +42,7 @@ public class GuiPlayer extends JFrame implements Player {
         try {
           player.play();
         } catch (Exception exception) {
-          SwingUtilities.invokeLater(() -> {
+          invokeLater(() -> {
             JOptionPane.showMessageDialog(
                 frame,
                 exception.getMessage(),
@@ -45,7 +50,7 @@ public class GuiPlayer extends JFrame implements Player {
                 JOptionPane.ERROR_MESSAGE
             );
           });
-          SwingUtilities.invokeLater(frame::dispose);
+          invokeLater(frame::dispose);
         }
       });
       thread.start();
@@ -82,6 +87,8 @@ public class GuiPlayer extends JFrame implements Player {
   }
 
   private final Board board = new Board();
+  private final JLabel labelStatus = new JLabel("Waiting for the game to start.");
+  private String opponentName;
 
   GuiPlayer() {
     super("Tic Tac Toe");
@@ -90,21 +97,28 @@ public class GuiPlayer extends JFrame implements Player {
     pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
     getContentPane().setLayout(new BorderLayout());
+    getContentPane().add(labelStatus, BorderLayout.NORTH);
     getContentPane().add(pane, BorderLayout.CENTER);
   }
 
   @Override
   public void gameStarted(PlayerGameInfo gameInfo) {
-    JOptionPane.showMessageDialog(this, "Your opponent is " + gameInfo.opponentsName());
+    invokeAndWait(() -> {
+      labelStatus.setText("Game started!");
+      opponentName = gameInfo.opponentsName();
+      JOptionPane.showMessageDialog(this, "Your opponent is " + gameInfo.opponentsName());
+    });
   }
 
   @Override
   public void waitOpponentsMove(BoardState boardState) {
+    invokeAndWait(() -> labelStatus.setText(opponentName + " is making a move."));
     board.setBoardState(boardState);
   }
 
   @Override
   public Position placeMarker(BoardState boardState) {
+    invokeAndWait(() -> labelStatus.setText("Please, make a move."));
     board.setBoardState(boardState);
     CompletableFuture<Position> positionFuture = new CompletableFuture<>();
 
@@ -124,26 +138,45 @@ public class GuiPlayer extends JFrame implements Player {
 
   @Override
   public void placementRejected(Position position, String reason) {
-
+    invokeAndWait(() -> {
+      JOptionPane.showMessageDialog(this,
+          "Your move has been rejected",
+          "Error",
+          JOptionPane.ERROR_MESSAGE);
+    });
   }
 
   @Override
   public void gameEnded(BoardState boardState, PlayersResult result) {
     board.setBoardState(boardState);
 
-    switch (result) {
-      case VICTORY -> JOptionPane.showMessageDialog(this,
-          "Congratulations " + getName() + ". You won the game!",
-          "Winner!",
-          JOptionPane.INFORMATION_MESSAGE);
-      case DEFEAT -> JOptionPane.showMessageDialog(this,
-          "Game Over, " + getName() + ". You lost the game!",
-          "Looser!",
-          JOptionPane.INFORMATION_MESSAGE);
-      case DRAW -> JOptionPane.showMessageDialog(this,
-          "Game Over, " + getName() + " - Draw!",
-          "Draw!",
-          JOptionPane.INFORMATION_MESSAGE);
+    invokeAndWait(() -> {
+      labelStatus.setText("Game ended.");
+      switch (result) {
+        case VICTORY -> JOptionPane.showMessageDialog(this,
+            "Congratulations " + getName() + ". You won the game!",
+            "Winner!",
+            JOptionPane.INFORMATION_MESSAGE);
+        case DEFEAT -> JOptionPane.showMessageDialog(this,
+            "Game Over, " + getName() + ". You lost the game!",
+            "Looser!",
+            JOptionPane.INFORMATION_MESSAGE);
+        case DRAW -> JOptionPane.showMessageDialog(this,
+            "Game Over, " + getName() + " - Draw!",
+            "Draw!",
+            JOptionPane.INFORMATION_MESSAGE);
+      }
+    });
+  }
+
+  private void invokeAndWait(Runnable runnable) {
+    try {
+      SwingUtilities.invokeAndWait(runnable);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    } catch (InvocationTargetException e) {
+      throw new RuntimeException(e);
     }
   }
 }
