@@ -169,6 +169,7 @@ public class Board extends JPanel {
           if (cells[i].marker == Marker.EMPTY) {
             moveHandler.moveMade(new Position(rowClicked, columnClicked));
             Arrays.stream(cells).forEach(c -> c.hasChanged = false);
+            moveHandler = null;
           }
         }
       }
