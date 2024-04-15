@@ -7,8 +7,18 @@ import bakeit.club.tictactoe.game.Position;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * This class is responsible for deserializing network messages exchanged between the game server
+ * and player's client application.
+ */
 public class MessageReader {
 
+  /**
+   * Deserializes the sequence of bytes to the application message.
+   *
+   * @param data the data to deserialized
+   * @return the deserialized data
+   */
   public Message read(byte[] data) {
     ByteBuffer buffer = ByteBuffer.wrap(data);
 

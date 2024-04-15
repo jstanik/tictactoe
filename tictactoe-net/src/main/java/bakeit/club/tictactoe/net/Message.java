@@ -1,5 +1,9 @@
 package bakeit.club.tictactoe.net;
 
+/**
+ * This interface represents a message that can be exchanged between a game server and the player's
+ * client application.
+ */
 public sealed interface Message permits
     GameEnded,
     GameStarted,
@@ -10,8 +14,11 @@ public sealed interface Message permits
     InvalidMove,
     WaitOpponentsMove {
 
-
-
+  /**
+   * Gets the code of this message. The code identifies the message type.
+   *
+   * @return the message type's assigned code
+   */
   default byte getCode() {
     return switch (this) {
       case GameStarted gameStarted -> 0;

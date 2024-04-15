@@ -7,8 +7,19 @@ import bakeit.club.tictactoe.game.Position;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * This class is responsible for serializing messages exchanged between the game server and player's
+ * client application.
+ */
 public class MessageWriter {
 
+  /**
+   * Serializes the application message to the sequence of bytes that can be transferred over the
+   * wire.
+   *
+   * @param message the message to serialize
+   * @return a sequence of bytes representing the serialized message
+   */
   public byte[] write(Message message) {
     return switch (message) {
       case GameStarted gameStarted -> write(gameStarted);

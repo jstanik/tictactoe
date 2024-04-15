@@ -23,6 +23,18 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * <p>
+ * This class handles networking for the player implementations on the client side. The only thing
+ * the client application needs to do is to implement the {@link Player} interface and provide the
+ * game server IP address as {@code InetSocketAddress}. This class handles the network communication
+ * with the game server and translates API calls between the game server and the client's player
+ * to/from the network messages.</p>
+ * <p>
+ * Closing the {@code ClientPlayer} will close also the network connection and free the allocated
+ * resources.
+ * </p>
+ */
 public class ClientPlayer implements AutoCloseable {
 
   private final Player delegate;
@@ -35,6 +47,13 @@ public class ClientPlayer implements AutoCloseable {
   private DataOutputStream dataOutputStream;
   private DataInputStream dataInputStream;
 
+  /**
+   * Creates a new instance of the network client for the player application.
+   *
+   * @param delegate      the implementation of the {@link Player} the network messages will be
+   *                      delegated to/from.
+   * @param serverAddress the IP address of the game server
+   */
   public ClientPlayer(
       Player delegate,
       InetSocketAddress serverAddress
@@ -44,6 +63,9 @@ public class ClientPlayer implements AutoCloseable {
 
   }
 
+  /**
+   * Makes this player to join the game and play.
+   */
   public void play() {
     connectToServer();
 
